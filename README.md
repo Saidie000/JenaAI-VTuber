@@ -1,7 +1,12 @@
 # Jena AI VTuber
-A modern, extendable virtual streamer / assistant framework powered by AI.
 
-![Jena AI Logo](docs/assets/logo.png)
+<!-- Use the crisp SVG logo (preferred) -->
+![Jena AI Logo](docs/assets/logo.svg)
+
+<!-- Fallback image tag (useful for some renderers) -->
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Saidie000/JenaAI-VTuber/main/docs/assets/logo.svg" alt="Jena AI Logo" width="240" />
+</p>
 
 Overview
 
@@ -31,7 +36,10 @@ Installation
 
    npm install
 
-3. Configure your environment (see docs/usage.md and docs/getting-started.md)
+3. Ensure the logo exists at docs/assets/logo.svg (the repo will contain both logo.svg and logo.png for compatibility).
+   - I include an SVG wrapper that references the existing logo.png so raster content remains the same while you get an .svg entrypoint for site tooling.
+
+4. Configure your environment (see docs/usage.md and docs/getting-started.md)
 
 Usage
 
