@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jena AI - Avatar Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .glass-dark {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+        }
+        
+        .data-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .training-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .animation-card {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(219, 39, 119, 0.1));
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+        
+        .notes-card {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .code-block {
+            font-family: 'Courier New', monospace;
+            background: #0f172a;
+            color: #10b981;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .status-online { color: #10b981; }
+        .status-offline { color: #ef4444; }
+        .status-training { color: #f59e0b; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700/50 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <i data-lucide="brain" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold gradient-text">Jena AI Dashboard</h1>
+                            <p class="text-slate-400 text-sm">Avatar Training & Learning Center</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <div id="avatarStatus" class="w-3 h-3 rounded-full bg-green-500 pulse-animation"></div>
+                            <span class="text-sm text-slate-300">Active Learning</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="database" class="w-4 h-4 text-blue-400"></i>
+                            <span id="dataCount" class="text-sm text-slate-300">Loading...</span>
+                        </div>
+                        
+                        <button id="refreshBtn" class="bg-slate-700 hover:bg-slate-600 rounded-lg p-2">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 py-6">
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="data-card rounded-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-400 text-sm">Training Sessions</p>
+                            <p id="trainingSessions" class="text-2xl font-bold text-green-400">0</p>
+                        </div>
+                        <i data-lucide="activity" class="w-8 h-8 text-green-400"></i>
+                    </div>
+                </div>
+                
+                <div class="data-card rounded-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-400 text-sm">Learned Animations</p>
+                            <p id="learnedAnimations" class="text-2xl font-bold text-pink-400">0</p>
+                        </div>
+                        <i data-lucide="play-circle" class="w-8 h-8 text-pink-400"></i>
+                    </div>
+                </div>
+                
+                <div class="data-card rounded-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-400 text-sm">Voice Samples</p>
+                            <p id="voiceSamples" class="text-2xl font-bold text-blue-400">0</p>
+                        </div>
+                        <i data-lucide="mic" class="w-8 h-8 text-blue-400"></i>
+                    </div>
+                </div>
+                
+                <div class="data-card rounded-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-400 text-sm">Notes & Insights</p>
+                            <p id="notesCount" class="text-2xl font-bold text-yellow-400">0</p>
+                        </div>
+                        <i data-lucide="book-open" class="w-8 h-8 text-yellow-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-6">
+                    <!-- Training Data -->
+                    <div class="glass-dark rounded-lg p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i data-lucide="brain" class="w-5 h-5 text-green-400"></i>
+                            <h2 class="text-lg font-semibold text-white">Training Data</h2>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="training-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Recent Training Sessions</h3>
+                                <div id="recentTraining" class="space-y-2">
+                                    <!-- Training sessions will be loaded here -->
+                                </div>
+                            </div>
+                            
+                            <div class="training-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Learning Progress</h3>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Facial Expressions</span>
+                                        <span class="text-green-400">85%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-700 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                    
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Voice Modulation</span>
+                                        <span class="text-blue-400">72%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-700 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 72%"></div>
+                                    </div>
+                                    
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Body Language</span>
+                                        <span class="text-purple-400">68%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-700 rounded-full h-2">
+                                        <div class="bg-purple-500 h-2 rounded-full" style="width: 68%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Training -->
+                    <div class="glass-dark rounded-lg p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i data-lucide="mic" class="w-5 h-5 text-blue-400"></i>
+                            <h2 class="text-lg font-semibold text-white">Voice Training</h2>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="data-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Voice Samples</h3>
+                                <div id="voiceSamplesList" class="space-y-2">
+                                    <!-- Voice samples will be loaded here -->
+                                </div>
+                            </div>
+                            
+                            <div class="data-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Emotion Analysis</h3>
+                                <canvas id="emotionChart" width="300" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Column -->
+                <div class="space-y-6">
+                    <!-- Learned Animations -->
+                    <div class="glass-dark rounded-lg p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i data-lucide="play-circle" class="w-5 h-5 text-pink-400"></i>
+                            <h2 class="text-lg font-semibold text-white">Learned Animations</h2>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="animation-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">From Video Analysis</h3>
+                                <div id="learnedAnimationsList" class="space-y-2">
+                                    <!-- Learned animations will be loaded here -->
+                                </div>
+                            </div>
+                            
+                            <div class="animation-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Animation Categories</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-slate-700/50 rounded p-2 text-center">
+                                        <div class="text-lg font-bold text-pink-400" id="facialAnimations">0</div>
+                                        <div class="text-xs text-slate-400">Facial</div>
+                                    </div>
+                                    <div class="bg-slate-700/50 rounded p-2 text-center">
+                                        <div class="text-lg font-bold text-purple-400" id="bodyAnimations">0</div>
+                                        <div class="text-xs text-slate-400">Body</div>
+                                    </div>
+                                    <div class="bg-slate-700/50 rounded p-2 text-center">
+                                        <div class="text-lg font-bold text-blue-400" id="gestureAnimations">0</div>
+                                        <div class="text-xs text-slate-400">Gestures</div>
+                                    </div>
+                                    <div class="bg-slate-700/50 rounded p-2 text-center">
+                                        <div class="text-lg font-bold text-green-400" id="emotionAnimations">0</div>
+                                        <div class="text-xs text-slate-400">Emotions</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="glass-dark rounded-lg p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i data-lucide="cpu" class="w-5 h-5 text-cyan-400"></i>
+                            <h2 class="text-lg font-semibold text-white">System Status</h2>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-300">AI Processing</span>
+                                <span class="status-online">Active</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-300">Memory Usage</span>
+                                <span class="text-blue-400">2.4GB / 8GB</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-300">GPU Acceleration</span>
+                                <span class="status-online">Enabled</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-300">WebSocket</span>
+                                <span class="status-online">Connected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-6">
+                    <!-- Notes & Scratchbook -->
+                    <div class="glass-dark rounded-lg p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i data-lucide="book-open" class="w-5 h-5 text-yellow-400"></i>
+                            <h2 class="text-lg font-semibold text-white">Notes & Scratchbook</h2>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="notes-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Recent Insights</h3>
+                                <div id="recentNotes" class="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
+                                    <!-- Notes will be loaded here -->
+                                </div>
+                            </div>
+                            
+                            <div class="notes-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Learning Patterns</h3>
+                                <div class="space-y-2">
+                                    <div class="text-sm text-slate-300">
+                                        <span class="text-yellow-400">•</span> Facial expressions improve with video training
+                                    </div>
+                                    <div class="text-sm text-slate-300">
+                                        <span class="text-yellow-400">•</span> Voice modulation peaks during emotional content
+                                    </div>
+                                    <div class="text-sm text-slate-300">
+                                        <span class="text-yellow-400">•</span> Gesture learning accelerates with user interaction
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Analytics -->
+                    <div class="glass-dark rounded-lg p-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-purple-400"></i>
+                            <h2 class="text-lg font-semibold text-white">Analytics</h2>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="data-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Learning Rate</h3>
+                                <canvas id="learningChart" width="300" height="200"></canvas>
+                            </div>
+                            
+                            <div class="data-card rounded-lg p-4">
+                                <h3 class="font-medium text-white mb-2">Data Sources</h3>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Video Analysis</span>
+                                        <span class="text-pink-400">45%</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">User Interaction</span>
+                                        <span class="text-blue-400">30%</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-slate-300">Voice Training</span>
+                                        <span class="text-green-400">25%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class AvatarDashboard {
+            constructor() {
+                this.data = {
+                    trainingSessions: [],
+                    learnedAnimations: [],
+                    voiceSamples: [],
+                    notes: [],
+                    systemStatus: {}
+                };
+                
+                this.initializeElements();
+                this.attachEventListeners();
+                this.loadDashboardData();
+                this.initializeCharts();
+            }
+
+            initializeElements() {
+                this.refreshBtn = document.getElementById('refreshBtn');
+                this.avatarStatus = document.getElementById('avatarStatus');
+                this.dataCount = document.getElementById('dataCount');
+                
+                // Stats elements
+                this.trainingSessions = document.getElementById('trainingSessions');
+                this.learnedAnimations = document.getElementById('learnedAnimations');
+                this.voiceSamples = document.getElementById('voiceSamples');
+                this.notesCount = document.getElementById('notesCount');
+                
+                // Content elements
+                this.recentTraining = document.getElementById('recentTraining');
+                this.voiceSamplesList = document.getElementById('voiceSamplesList');
+                this.learnedAnimationsList = document.getElementById('learnedAnimationsList');
+                this.recentNotes = document.getElementById('recentNotes');
+                
+                // Animation category elements
+                this.facialAnimations = document.getElementById('facialAnimations');
+                this.bodyAnimations = document.getElementById('bodyAnimations');
+                this.gestureAnimations = document.getElementById('gestureAnimations');
+                this.emotionAnimations = document.getElementById('emotionAnimations');
+            }
+
+            attachEventListeners() {
+                this.refreshBtn.addEventListener('click', () => this.loadDashboardData());
+            }
+
+            async loadDashboardData() {
+                try {
+                    // Simulate loading data from IndexedDB or API
+                    await this.loadTrainingData();
+                    await this.loadAnimationData();
+                    await this.loadVoiceData();
+                    await this.loadNotesData();
+                    await this.loadSystemStatus();
+                    
+                    this.updateStats();
+                    this.updateContent();
+                    this.updateCharts();
+                    
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                }
+            }
+
+            async loadTrainingData() {
+                // Simulate training data
+                this.data.trainingSessions = [
+                    {
+                        id: 1,
+                        type: 'Facial Expression',
+                        duration: '2h 15m',
+                        accuracy: 92,
+                        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+                        status: 'completed'
+                    },
+                    {
+                        id: 2,
+                        type: 'Voice Modulation',
+                        duration: '1h 30m',
+                        accuracy: 87,
+                        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+                        status: 'completed'
+                    },
+                    {
+                        id: 3,
+                        type: 'Body Language',
+                        duration: '45m',
+                        accuracy: 78,
+                        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
+                        status: 'in_progress'
+                    }
+                ];
+            }
+
+            async loadAnimationData() {
+                // Simulate learned animations
+                this.data.learnedAnimations = [
+                    {
+                        id: 1,
+                        name: 'Happy Wave',
+                        category: 'gesture',
+                        source: 'Video Analysis',
+                        confidence: 95,
+                        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000)
+                    },
+                    {
+                        id: 2,
+                        name: 'Surprised Expression',
+                        category: 'facial',
+                        source: 'User Interaction',
+                        confidence: 88,
+                        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000)
+                    },
+                    {
+                        id: 3,
+                        name: 'Thinking Pose',
+                        category: 'body',
+                        source: 'Video Analysis',
+                        confidence: 91,
+                        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000)
+                    },
+                    {
+                        id: 4,
+                        name: 'Excited Jump',
+                        category: 'emotion',
+                        source: 'User Interaction',
+                        confidence: 83,
+                        timestamp: new Date(Date.now() - 7 * 60 * 60 * 1000)
+                    }
+                ];
+            }
+
+            async loadVoiceData() {
+                // Simulate voice samples
+                this.data.voiceSamples = [
+                    {
+                        id: 1,
+                        text: 'Hello, how are you today?',
+                        emotion: 'happy',
+                        duration: '3.2s',
+                        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000)
+                    },
+                    {
+                        id: 2,
+                        text: 'I am learning new things every day!',
+                        emotion: 'excited',
+                        duration: '4.1s',
+                        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000)
+                    },
+                    {
+                        id: 3,
+                        text: 'Thank you for teaching me.',
+                        emotion: 'grateful',
+                        duration: '2.8s',
+                        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000)
+                    }
+                ];
+            }
+
+            async loadNotesData() {
+                // Simulate notes and insights
+                this.data.notes = [
+                    {
+                        id: 1,
+                        title: 'Facial Expression Learning',
+                        content: 'Noticed that eyebrow movements are crucial for expressing surprise. Need to focus more on micro-expressions.',
+                        category: 'learning',
+                        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000)
+                    },
+                    {
+                        id: 2,
+                        title: 'Voice Pattern Recognition',
+                        content: 'Higher pitch variations work better for expressing excitement. Lower tones for serious topics.',
+                        category: 'voice',
+                        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000)
+                    },
+                    {
+                        id: 3,
+                        title: 'Gesture Coordination',
+                        content: 'Hand movements should be synchronized with speech rhythm for natural appearance.',
+                        category: 'movement',
+                        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000)
+                    }
+                ];
+            }
+
+            async loadSystemStatus() {
+                this.data.systemStatus = {
+                    aiProcessing: 'active',
+                    memoryUsage: '2.4GB / 8GB',
+                    gpuAcceleration: 'enabled',
+                    websocket: 'connected',
+                    lastUpdate: new Date()
+                };
+            }
+
+            updateStats() {
+                this.trainingSessions.textContent = this.data.trainingSessions.length;
+                this.learnedAnimations.textContent = this.data.learnedAnimations.length;
+                this.voiceSamples.textContent = this.data.voiceSamples.length;
+                this.notesCount.textContent = this.data.notes.length;
+                
+                // Update data count
+                const totalData = this.data.trainingSessions.length + 
+                                this.data.learnedAnimations.length + 
+                                this.data.voiceSamples.length + 
+                                this.data.notes.length;
+                this.dataCount.textContent = `${totalData} data points`;
+            }
+
+            updateContent() {
+                this.updateTrainingContent();
+                this.updateAnimationContent();
+                this.updateVoiceContent();
+                this.updateNotesContent();
+                this.updateAnimationCategories();
+            }
+
+            updateTrainingContent() {
+                this.recentTraining.innerHTML = this.data.trainingSessions.map(session => `
+                    <div class="flex items-center justify-between p-2 bg-slate-700/50 rounded">
+                        <div>
+                            <div class="text-sm font-medium text-white">${session.type}</div>
+                            <div class="text-xs text-slate-400">${session.duration} • ${session.accuracy}% accuracy</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs ${session.status === 'completed' ? 'text-green-400' : 'text-yellow-400'}">
+                                ${session.status === 'completed' ? '✓' : '⏳'}
+                            </span>
+                            <span class="text-xs text-slate-500">
+                                ${session.timestamp.toLocaleTimeString()}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateAnimationContent() {
+                this.learnedAnimationsList.innerHTML = this.data.learnedAnimations.map(animation => `
+                    <div class="flex items-center justify-between p-2 bg-slate-700/50 rounded">
+                        <div>
+                            <div class="text-sm font-medium text-white">${animation.name}</div>
+                            <div class="text-xs text-slate-400">${animation.source} • ${animation.confidence}% confidence</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500">
+                                ${animation.timestamp.toLocaleTimeString()}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateVoiceContent() {
+                this.voiceSamplesList.innerHTML = this.data.voiceSamples.map(sample => `
+                    <div class="flex items-center justify-between p-2 bg-slate-700/50 rounded">
+                        <div>
+                            <div class="text-sm font-medium text-white">"${sample.text}"</div>
+                            <div class="text-xs text-slate-400">${sample.emotion} • ${sample.duration}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500">
+                                ${sample.timestamp.toLocaleTimeString()}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateNotesContent() {
+                this.recentNotes.innerHTML = this.data.notes.map(note => `
+                    <div class="p-2 bg-slate-700/50 rounded">
+                        <div class="text-sm font-medium text-white mb-1">${note.title}</div>
+                        <div class="text-xs text-slate-300 mb-2">${note.content}</div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-500">${note.category}</span>
+                            <span class="text-xs text-slate-500">${note.timestamp.toLocaleTimeString()}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateAnimationCategories() {
+                const categories = this.data.learnedAnimations.reduce((acc, anim) => {
+                    acc[anim.category] = (acc[anim.category] || 0) + 1;
+                    return acc;
+                }, {});
+
+                this.facialAnimations.textContent = categories.facial || 0;
+                this.bodyAnimations.textContent = categories.body || 0;
+                this.gestureAnimations.textContent = categories.gesture || 0;
+                this.emotionAnimations.textContent = categories.emotion || 0;
+            }
+
+            initializeCharts() {
+                this.initializeEmotionChart();
+                this.initializeLearningChart();
+            }
+
+            initializeEmotionChart() {
+                const ctx = document.getElementById('emotionChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Happy', 'Excited', 'Grateful', 'Neutral', 'Sad'],
+                        datasets: [{
+                            data: [35, 25, 20, 15, 5],
+                            backgroundColor: [
+                                '#10b981',
+                                '#3b82f6',
+                                '#8b5cf6',
+                                '#f59e0b',
+                                '#ef4444'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e2e8f0',
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            initializeLearningChart() {
+                const ctx = document.getElementById('learningChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Learning Progress',
+                            data: [65, 72, 78, 82, 85, 88, 92],
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e2e8f0',
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: {
+                                        size: 10
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: {
+                                        size: 10
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateCharts() {
+                // Charts are already initialized with data
+                // In a real implementation, you'd update the chart data here
+            }
+        }
+
+        // Initialize the dashboard when the page loads
+        let dashboard;
+        document.addEventListener('DOMContentLoaded', () => {
+            dashboard = new AvatarDashboard();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
