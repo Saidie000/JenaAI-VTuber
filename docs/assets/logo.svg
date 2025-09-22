@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This SVG acts as a scalable wrapper around the raster logo that already exists as docs/assets/logo.png.
+If you later replace this with a true vector SVG, replace the contents with the vector artwork.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Jena AI Logo">
+  <title>Jena AI Logo</title>
+  <!-- Reference the PNG placed at the same path; keeping the raster image ensures visual parity -->
+  <image href="logo.png" width="512" height="512" preserveAspectRatio="xMidYMid meet" />
+</svg>
