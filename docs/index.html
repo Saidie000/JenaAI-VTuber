@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jena AI VTuber — Docs</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner">
+      <img src="assets/logo.svg" alt="Jena AI Logo" class="site-logo" />
+      <div>
+        <h1>Jena AI VTuber</h1>
+        <p class="tagline">Toolkit and runtime for building AI-powered VTubers and assistants</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="site-nav">
+    <a href="#overview">Overview</a>
+    <a href="#installation">Installation</a>
+    <a href="#usage">Usage</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#contributing">Contributing</a>
+  </nav>
+
+  <main class="content">
+    <section id="overview">
+      <h2>Overview</h2>
+      <p>Jena AI is a toolkit and runtime for building AI-powered VTubers and virtual assistants. It combines input handling, agent orchestration, multimodal outputs (voice, animation, overlays), and flexible integration points so creators can build interactive characters.</p>
+    </section>
+
+    <section id="installation">
+      <h2>Installation</h2>
+      <pre><code>git clone https://github.com/Saidie000/JenaAI-VTuber.git
+cd JenaAI-VTuber
+npm install</code></pre>
+      <p>Make sure the logo is present at <code>docs/assets/logo.svg</code>. The branch chore/logo-svg includes an SVG wrapper that references the raster logo.</p>
+    </section>
+
+    <section id="usage">
+      <h2>Usage</h2>
+      <p>See the repository README and the docs/ directory for examples and CLI instructions. To preview these files locally, run a simple static server from the repository root and open <code>/docs/index.html</code>.</p>
+    </section>
+
+    <section id="architecture">
+      <h2>Architecture</h2>
+      <ul>
+        <li>Avatar rendering (Three.js)</li>
+        <li>Virtual input and game controllers</li>
+        <li>Modular hot-swappable modules via WebSocket</li>
+        <li>AI integration (WebLLM or chosen LLM)</li>
+      </ul>
+    </section>
+
+    <section id="contributing">
+      <h2>Contributing</h2>
+      <p>Contributions are welcome — open issues, propose features, or send PRs. See <code>CONTRIBUTING.md</code> if present.</p>
+    </section>
+
+    <footer class="site-footer">
+      <p>Generated static docs — built from the repository content.</p>
+      <p><small>Branch tip: chore/logo-svg</small></p>
+    </footer>
+  </main>
+</body>
+</html>
